@@ -1,0 +1,122 @@
+* {
+  box-sizing: border-box;
+  font-family: "Russo One", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  user-select: none;
+  overflow: hidden;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#dashboard {
+  background-color: #f2f2f2;
+  /*background-image: url('https://source.unsplash.com/random');*/
+  /*background-image: url(./assets/wallpapers/vulcao.jpg);*/
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 1rem;
+  height: 100%;
+  min-height: 100vh;
+}
+
+.app {
+  background-color: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 85px;
+  width: 85px;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  margin-left: 1.75rem;
+  margin-right: 1.75rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.app:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.app h2 {
+  margin: 0;
+}
+
+.app>img {
+  width: 4rem;
+}
+
+/* Add more styles for other apps as needed */
+/*
+#bar {
+  position: absolute;
+  top: 80vh;
+  background-color: rgba(255, 255, 255, 0.788);
+  border-radius: 15px;
+  height: min-content;
+}
+*/
+#task-bar {
+  display: flex;
+  justify-content: center;
+  width: 80vw;
+  margin-top: 82vh;
+}
+
+#iframe {
+  position: absolute;
+  top: 7.5vh;
+  left: 10vw;
+  width: 80vw;
+  height: 75vh;
+  border-radius: 15px;
+  transform: translateY(50%) scale(0.2);
+  transition: transform 0.9s ease-in-out;
+}
+
+#usage {
+  display: flex;
+  justify-content: space-around;
+}
+
+#usage>img {
+  width: 1.15rem;
+  height: max-content;
+  margin-left: 1rem;
+  margin-right: 0.25rem;
+}
+
+#top {
+  background-color: rgba(255, 255, 255, 0.255);
+  display: flex;
+  text-align: center;
+  justify-content: space-between;
+  align-self: center;
+  width: 100vw;
+  padding-top: 0.7vh;
+  padding-bottom: 0.7vh;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  border-radius: 0.75rem;
+}
+
+#top>div {
+  width: 242px;
+}

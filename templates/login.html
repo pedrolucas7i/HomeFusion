@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Protest+Guerrilla&family=Russo+One&display=swap" rel="stylesheet">
+    <title>LOGIN</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if there's an error message
+            var hasError = "{{ error }}";
+            
+            if (hasError === 'True') {
+                document.getElementById('username').classList.add('shake1');
+                document.getElementById('password').classList.add('shake2');
+                setTimeout(function() {
+                    document.getElementById('username').classList.remove('shake1');
+                    document.getElementById('password').classList.remove('shake2');
+                }, 600);
+            }
+        });
+    </script>
+    <style>
+                /* Global Styles */
+        * {
+            box-sizing: border-box;
+            font-family: "Russo One", sans-serif;
+            font-weight: 400;
+            font-style: normal;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Login Page Styles */
+        #login {
+            background-color: #f2f2f2;
+            background-image: url('https://images.unsplash.com/photo-1691435828932-911a7801adfb?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); /* Update path if necessary */
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            min-height: 100vh;
+        }
+
+        #form {
+            background-color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            width: 20rem;
+            border-radius: 1rem;
+            padding: 1.5rem 2.5rem;
+        }
+
+        /* Input and Button Styles */
+        #form>input,
+        #form>button {
+            border-radius: 1rem;
+            border: 1px solid orangered;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        #form>button {
+            width: 50%;
+            border-color: orangered;
+        }
+
+        #form>input:focus,
+        #form>button:hover {
+            border-color: red;
+            outline: none;
+        }
+
+        /* Title and Footer Styles */
+        #title {
+            position: absolute;
+            text-align: center;
+            top: 2rem;
+            width: 100vw;
+            font-size: 5rem;
+        }
+
+        #go {
+            position: absolute;
+            text-align: center;
+            bottom: 10rem;
+            width: 100vw;
+        }
+
+        #go>button {
+            width: 20rem;
+            border-radius: 0.5rem;
+            border: 1px solid black;
+            background-color: black;
+            color: orangered;
+        }
+
+        #version {
+            position: absolute;
+            bottom: 2.5vh;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 1vw;
+        }
+
+        /* Shake Animations */
+        .shake1 {
+            animation: shake1 0.6s;
+        }
+
+        .shake2 {
+            animation: shake2 0.6s;
+        }
+
+        @keyframes shake1 {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-20px); }
+            40% { transform: translateX(20px); }
+            60% { transform: translateX(-20px); }
+            80% { transform: translateX(20px); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes shake2 {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(20px); }
+            40% { transform: translateX(-20px); }
+            60% { transform: translateX(20px); }
+            80% { transform: translateX(-20px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 600px) {
+            #form {
+                width: 90%;
+                padding: 1rem;
+                margin-top: 20vh;
+            }
+
+            #title {
+                font-size: 3rem;
+            }
+
+            #go>button {
+                width: 15rem;
+            }
+
+            #version {
+                font-size: 1.5vw;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+    <form method="post" action="{{ url_for('login') }}">
+        <div id="login">
+            <div id="form">
+                <label for="username">USER</label><br>
+                <input type="text" id="username" name="username" required><br><br>
+                <label for="password">PASSWORD</label><br>
+                <input type="password" id="password" name="password" required><br><br>
+            </div>
+        </div>
+        <h2 id="title">Welcome to your personal home server</h2>
+        <div id="go">
+            <button type="submit">Let's GO</button>
+        </div>
+        <p id="version">HomeFusion V1.3</p>
+    </form>
+</body>
+
+</html>
