@@ -3,136 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Set Wallpaper and Theme</title>
-    <style>
-        /* styles.css */
-
-        /* Reseta alguns estilos padrão */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        /* Estilo básico do corpo */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            padding: 20px;
-        }
-
-        /* Estilo do título */
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
-
-        /* Estilo do formulário */
-        form {
-            max-width: 500px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Estilo dos rótulos dos campos */
-        label {
-            display: block;
-            font-size: 16px;
-            margin-bottom: 8px;
-            color: #555;
-        }
-
-        /* Estilo dos campos de seleção */
-        select {
-            display: block;
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        /* Estilo do botão */
-        button {
-            display: inline-block;
-            padding: 10px 20px;
-            font-size: 16px;
-            color: #fff;
-            background-color: #3498db;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        button:hover {
-            background-color: #2980b9;
-        }
-
-        /* Estilo do link de navegação */
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            color: #3498db;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        /* Estilo das mensagens de flash */
-        ul.flashes {
-            list-style: none;
-            padding: 0;
-            margin-top: 20px;
-        }
-
-        ul.flashes li {
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            color: #fff;
-        }
-
-        ul.flashes li.danger {
-            background-color: #e74c3c;
-        }
-
-        ul.flashes li.success {
-            background-color: #2ecc71;
-        }
-
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/iframe.css') }}">
+    <title>Wallpaper Management</title>
 </head>
 <body>
-    <h1>Set Wallpaper and Theme</h1>
+    <h1>Wallpaper Management</h1>
 
-    <!-- Formulário para definir o wallpaper e o tema -->
-    <form action="{{ url_for('set_wallpaper_and_theme') }}" method="post">
-        <label for="wallpaper">Select Wallpaper:</label>
-        <select name="wallpaper" id="wallpaper">
-            <option value="">Select a Wallpaper</option>
-            {% for wallpaper in availble_wallpapers %}
-                <option value="{{ wallpaper }}" {% if wallpaper == selected_wallpaper_path %}selected{% endif %}>{{ wallpaper }}</option>
-            {% endfor %}
-        </select>
+    <!-- Seção para definir o wallpaper e o tema -->
+    <section>
+        <h2>Set Wallpaper and Theme</h2>
+        <form action="{{ url_for('set_wallpaper_and_theme') }}" method="post">
+            <label for="wallpaper">Select Wallpaper:</label>
+            <select name="wallpaper" id="wallpaper">
+                <option value="">Select a Wallpaper</option>
+                {% for wallpaper in availble_wallpapers %}
+                    <option value="{{ wallpaper }}" {% if wallpaper == selected_wallpaper_path %}selected{% endif %}>{{ wallpaper }}</option>
+                {% endfor %}
+            </select>
 
-        <label for="theme">Select Theme:</label>
-        <select name="theme" id="theme">
-            <option value="light" {% if selected_theme == 'light' %}selected{% endif %}>Light</option>
-            <option value="dark" {% if selected_theme == 'dark' %}selected{% endif %}>Dark</option>
-        </select>
+            <label for="theme">Select Theme:</label>
+            <select name="theme" id="theme">
+                <option value="light" {% if selected_theme == 'light' %}selected{% endif %}>Light</option>
+                <option value="dark" {% if selected_theme == 'dark' %}selected{% endif %}>Dark</option>
+            </select>
 
-        <button type="submit">Save Changes</button>
-    </form>
+            <button type="submit">Save Changes</button>
+        </form>
+    </section>
 
-    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+    <!-- Seção para fazer o upload de um novo wallpaper -->
+    <section>
+        <h2>Upload Wallpaper</h2>
+        <form action="{{ url_for('upload_wallpaper') }}" method="post" enctype="multipart/form-data">
+            <label for="wallpaper">Select Wallpaper:</label>
+            <input type="file" name="wallpaper" id="wallpaper" required>
+            <button type="submit">Upload</button>
+        </form>
+    </section>
 
     <!-- Exibindo mensagens de feedback -->
     {% with messages = get_flashed_messages(with_categories=True) %}

@@ -74,6 +74,45 @@ def create_user(username, password):
     finally:
         connection.close()
 
+def get_users_by_name(username):
+    connection = get_db_connection()
+    try:
+        with connection.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT id, username FROM users WHERE username LIKE %s", ("%" + username + "%",))
+            return cursor.fetchall()
+    finally:
+        connection.close()
+
+def get_all_users():
+    connection = get_db_connection()
+    try:
+        with connection.cursor(dictionary=True) as cursor:
+            cursor.execute("SELECT id, username FROM users")
+            users = cursor.fetchall()
+            return users if users else []
+    finally:
+        connection.close()
+
+
+def delete_user(user_id):
+    connection = get_db_connection()
+    try:
+        with connection.cursor(dictionary=True) as cursor:
+            # Verifica o número total de usuários
+            cursor.execute("SELECT COUNT(*) as total FROM users")
+            result = cursor.fetchone()
+            if result['total'] <= 1:
+                # Se houver apenas um usuário, não permite a exclusão
+                raise Exception("Cannot delete the last remaining user.")
+
+            # Exclui o usuário especificado
+            cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            connection.commit()
+    finally:
+        connection.close()
+
+
+
 def update_user_password(user_id, new_password):
     connection = get_db_connection()
     try:
@@ -279,7 +318,6 @@ def set_wallpaper_and_theme():
 
         apply_wallpaper_and_theme(user_id, wallpaper_path, theme)
         flash('Wallpaper and theme updated successfully!', 'success')
-        return redirect(url_for('dashboard'))
     availble_wallpapers = os.listdir("static/wallpapers/")
     selected_wallpaper_path, selected_theme = get_selected_wallpaper_and_theme(session['user_id'])
     return render_template('setwt.html', 
@@ -308,12 +346,50 @@ def upload_wallpaper():
             
             # Você pode adicionar o caminho do arquivo no banco de dados aqui se necessário
             flash('Wallpaper successfully uploaded', 'success')
-            return redirect(url_for('dashboard'))
         else:
             flash('File type not allowed', 'danger')
             return redirect(request.url)
     
-    return render_template('upload_wallpaper.html')
+    return render_template('setwt.html')
+
+@app.route('/user_management', methods=['GET', 'POST'])
+def user_management():
+    users = get_all_users()
+    if users is None:
+        users = []
+    return render_template('user_management.html', users=users)
+
+
+    return render_template('user_management.html', users=None)
+
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+def delete_user_route(user_id):
+    try:
+        delete_user(user_id)
+        flash('User deleted successfully!', 'success')
+    except Exception as e:
+        flash(str(e), 'danger')  # Mostra a mensagem de erro se tentar excluir o último usuário
+    return redirect(url_for('user_management'))
+
+
+@app.route('/update_password/<int:user_id>', methods=['POST'])
+def update_password_route(user_id):
+    new_password = request.form['new_password']
+    update_user_password(user_id, new_password)
+    flash('Password updated successfully!', 'success')
+    return redirect(url_for('user_management'))
+
+@app.route('/create_user', methods=['POST'])
+def create_user_route():
+    username = request.form['username']
+    password = request.form['password']
+    create_user(username, password)
+    flash('User created successfully!', 'success')
+    return redirect(url_for('user_management'))
+
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    return render_template('settings.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
