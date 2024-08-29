@@ -4,6 +4,7 @@ import subprocess
 import bcrypt
 import psutil
 import mysql.connector
+import shutil
 from flask import Flask, redirect, session, url_for, render_template, request, flash, send_from_directory
 from werkzeug.utils import secure_filename
 
@@ -170,15 +171,6 @@ def get_selected_wallpaper_and_theme(user_id):
         connection.close()
     return selected_wallpaper_path, selected_theme
 
-def get_files_for_user(user_id):
-    connection = get_db_connection()
-    try:
-        with connection.cursor(dictionary=True) as cursor:
-            cursor.execute("SELECT * FROM files WHERE user_id = %s ORDER BY uploaded_at DESC", (user_id,))
-            return cursor.fetchall()
-    finally:
-        connection.close()
-
 def log_user_access(user_id, access_level):
     ip_address, os_name, user_agent = get_device_info()
     connection = get_db_connection()
@@ -268,40 +260,48 @@ def dashboard():
                            ram_usage=ram_usage,
                            wifi_signal=wifi_signal)
 
-@app.route('/files/', defaults={'folder': ''})
+@app.route('/files/', defaults={'folder': 'root'})
 @app.route('/files/<path:folder>', methods=['GET', 'POST'])
 def files(folder):
-    # Handle file uploads
+    # Caminho completo para a pasta atual
+    current_folder = os.path.join(app.config['UPLOAD_FOLDER'], folder)
+
+    # Garantir que a pasta existe
+    if not os.path.exists(current_folder):
+        os.makedirs(current_folder)
+
     if request.method == 'POST':
+        # Upload de arquivo
         if 'file' in request.files:
             file = request.files['file']
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, filename)
+                file_path = os.path.join(current_folder, filename)
                 file.save(file_path)
                 flash('File uploaded successfully', 'success')
             else:
                 flash('File type not allowed', 'danger')
+
+        # Criação de nova pasta
         elif 'new_folder' in request.form:
-            new_folder = request.form['new_folder']
-            new_folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, new_folder)
-            if not os.path.exists(new_folder_path):
-                os.makedirs(new_folder_path)
-                flash('Folder created successfully', 'success')
+            new_folder = request.form['new_folder'].strip()
+            if new_folder and new_folder.lower() != 'uploads':  # Impedir criação de pasta chamada "uploads"
+                new_folder_path = os.path.join(current_folder, new_folder)
+                if not os.path.exists(new_folder_path):
+                    os.makedirs(new_folder_path)
+                    flash('Folder created successfully', 'success')
+                else:
+                    flash('Folder already exists', 'danger')
             else:
-                flash('Folder already exists', 'danger')
+                flash('Invalid folder name.', 'danger')
+
         return redirect(url_for('files', folder=folder))
 
-    # Handle folder navigation
-    current_folder = os.path.join(app.config['UPLOAD_FOLDER'], folder)
-    if not os.path.exists(current_folder):
-        os.makedirs(current_folder)
-
-    # Get files and folders
+    # Obtenha arquivos e pastas na pasta atual
     files, folders = list_files_and_folders(current_folder)
 
-    # Determine the parent folder
-    parent_folder = '/'.join(folder.split('/')[:-1])
+    # Diretório pai
+    parent_folder = None if folder == "" else os.path.dirname(folder)
 
     return render_template('files.html',
                            current_folder=folder,
@@ -309,13 +309,12 @@ def files(folder):
                            folders=folders,
                            parent_folder=parent_folder)
 
-
 @app.route('/download/<path:filename>', methods=['GET'])
 def download_file(filename):
     folder = request.args.get('folder', '')
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, filename)
     if os.path.exists(file_path):
-        return send_from_directory(os.path.dirname(file_path), filename)
+        return send_from_directory(os.path.dirname(file_path), filename, as_attachment=True)
     else:
         flash('File not found', 'danger')
         return redirect(url_for('files', folder=folder))
@@ -332,6 +331,19 @@ def delete_file(filename):
         flash('File not found', 'danger')
     return redirect(url_for('files', folder=folder))
 
+@app.route('/delete_folder', methods=['POST'])
+def delete_folder():
+    folder_to_delete = request.form['folder']
+    folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder_to_delete)
+    if os.path.isdir(folder_path):
+        try:
+            shutil.rmtree(folder_path)  # Remove a pasta e seu conteúdo
+            flash('Folder deleted successfully', 'success')
+        except Exception as e:
+            flash(f'Error deleting folder: {str(e)}', 'danger')
+    else:
+        flash('Folder not found', 'danger')
+    return redirect(url_for('files'))
 
 @app.route('/create_folder', methods=['POST'])
 def create_folder_route():
@@ -345,6 +357,14 @@ def create_folder_route():
         flash('Folder already exists', 'danger')
     return redirect(url_for('files', folder=folder))
 
+@app.errorhandler(405)
+def method_not_allowed(e):
+    # Verificar se o erro 405 ocorreu na rota /files/
+    if request.path.startswith('/files'):
+        flash('It is not allowed to create files in the root directory.', 'danger')
+        return redirect(url_for('files'))
+    # Caso contrário, delegar ao manipulador global ou retornar uma resposta padrão
+    return "Method Not Allowed", 405
     
 @app.route('/setwt', methods=['GET', 'POST'])
 def set_wallpaper_and_theme():
