@@ -8,8 +8,8 @@
 
 /* Estilo básico do corpo */
 body {
-  background-color: #f4f4f4;
-  color: #333;
+  background-color: black;
+  color: white;
   height: 100%;
   overflow: hidden;
 }
@@ -99,7 +99,7 @@ ul li a:hover {
 
 /* Estilos específicos para o dashboard */
 #dashboard {
-  background-color: #f2f2f2;
+  background-color: black;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
@@ -113,7 +113,7 @@ ul li a:hover {
 }
 
 .app {
-  background-color: white;
+  background-color: black;
   border-radius: 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -171,8 +171,7 @@ ul li a:hover {
 }
 
 #top {
-  background-color: rgba(255, 255, 255, 0.255);
-  color: black;
+  background-color: black;
   display: flex;
   text-align: center;
   justify-content: space-between;
@@ -189,7 +188,7 @@ ul li a:hover {
 /* Settings */
 #menu {
   width: 35%;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: black;
   height: max;
   margin: 1%;
   padding: 1%;
@@ -205,8 +204,8 @@ ul li a:hover {
   margin-left: 2rem;
   padding: 1rem;
   border-radius: 0.5rem;
-  color: white;
-  background-color: black;
+  color: black;
+  background-color: white;
   transition: transform 1s ease;
 }
 
@@ -215,18 +214,18 @@ ul li a:hover {
 }
 
 #window {
-  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 17.5px;
+  background-color: black;
   width: 65%;
   height: max;
   margin: 1%;
   padding: 1%;
   margin-left: 0.1%;
-  border-top-right-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
 }
 
 #title {
   padding-left: 2.5%;
+  color: white;
 }
 
 #d {

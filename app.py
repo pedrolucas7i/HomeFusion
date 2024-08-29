@@ -48,19 +48,24 @@ def get_db_connection():
         database=DB
     )
 
-# Função para criar uma nova pasta
 def create_folder(folder_name):
     folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder_name)
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-        
-# Função para listar arquivos e pastas
+
 def list_files_and_folders(path):
+    """ List all files and folders in a directory. """
     try:
-        return os.listdir(path)
+        if not os.path.exists(path):
+            raise FileNotFoundError("The directory does not exist.")
+        entries = os.listdir(path)
+        files = [entry for entry in entries if os.path.isfile(os.path.join(path, entry))]
+        folders = [entry for entry in entries if os.path.isdir(os.path.join(path, entry))]
+        return files, folders
     except Exception as e:
         flash('Error retrieving files and folders: ' + str(e), 'danger')
-        return []
+        return [], []
+
 
 def create_user(username, password):
     connection = get_db_connection()
@@ -93,7 +98,6 @@ def get_all_users():
     finally:
         connection.close()
 
-
 def delete_user(user_id):
     connection = get_db_connection()
     try:
@@ -102,7 +106,6 @@ def delete_user(user_id):
             cursor.execute("SELECT COUNT(*) as total FROM users")
             result = cursor.fetchone()
             if result['total'] <= 1:
-                # Se houver apenas um usuário, não permite a exclusão
                 raise Exception("Cannot delete the last remaining user.")
 
             # Exclui o usuário especificado
@@ -110,8 +113,6 @@ def delete_user(user_id):
             connection.commit()
     finally:
         connection.close()
-
-
 
 def update_user_password(user_id, new_password):
     connection = get_db_connection()
@@ -267,48 +268,84 @@ def dashboard():
                            ram_usage=ram_usage,
                            wifi_signal=wifi_signal)
 
-@app.route('/upload', methods=['GET', 'POST'])
-def upload_file():
+@app.route('/files/', defaults={'folder': ''})
+@app.route('/files/<path:folder>', methods=['GET', 'POST'])
+def files(folder):
+    # Handle file uploads
     if request.method == 'POST':
-        folder = request.form.get('folder', '')
-        file = request.files.get('file')
-        if not file:
-            flash('No file part', 'danger')
-            return redirect(request.url)
-        
-        if file.filename == '':
-            flash('No selected file', 'danger')
-            return redirect(request.url)
-        
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, filename)
-            file.save(file_path)
-            flash('File successfully uploaded', 'success')
-            return redirect(url_for('list_files', folder=folder))
-        else:
-            flash('File type not allowed', 'danger')
-            return redirect(request.url)
-    
-    # For GET request
-    folder = request.args.get('folder', '')
-    return render_template('upload.html', current_folder=folder)
+        if 'file' in request.files:
+            file = request.files['file']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, filename)
+                file.save(file_path)
+                flash('File uploaded successfully', 'success')
+            else:
+                flash('File type not allowed', 'danger')
+        elif 'new_folder' in request.form:
+            new_folder = request.form['new_folder']
+            new_folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, new_folder)
+            if not os.path.exists(new_folder_path):
+                os.makedirs(new_folder_path)
+                flash('Folder created successfully', 'success')
+            else:
+                flash('Folder already exists', 'danger')
+        return redirect(url_for('files', folder=folder))
 
-@app.route('/files')
-def list_files():
-    folder = request.args.get('folder', '')
-    folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder)
-    files_and_folders = list_files_and_folders(folder_path)
-    return render_template('files.html', files_and_folders=files_and_folders, current_folder=folder)
+    # Handle folder navigation
+    current_folder = os.path.join(app.config['UPLOAD_FOLDER'], folder)
+    if not os.path.exists(current_folder):
+        os.makedirs(current_folder)
 
-@app.route('/download/<filename>')
+    # Get files and folders
+    files, folders = list_files_and_folders(current_folder)
+
+    # Determine the parent folder
+    parent_folder = '/'.join(folder.split('/')[:-1])
+
+    return render_template('files.html',
+                           current_folder=folder,
+                           files=files,
+                           folders=folders,
+                           parent_folder=parent_folder)
+
+
+@app.route('/download/<path:filename>', methods=['GET'])
 def download_file(filename):
-    try:
-        return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
-    except FileNotFoundError:
-        flash('File not found.', 'danger')
-        return redirect(url_for('upload_file'))
+    folder = request.args.get('folder', '')
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, filename)
+    if os.path.exists(file_path):
+        return send_from_directory(os.path.dirname(file_path), filename)
+    else:
+        flash('File not found', 'danger')
+        return redirect(url_for('files', folder=folder))
 
+
+@app.route('/delete/<path:filename>', methods=['POST'])
+def delete_file(filename):
+    folder = request.form['folder']
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, filename)
+    if os.path.isfile(file_path):
+        os.remove(file_path)
+        flash('File deleted successfully', 'success')
+    else:
+        flash('File not found', 'danger')
+    return redirect(url_for('files', folder=folder))
+
+
+@app.route('/create_folder', methods=['POST'])
+def create_folder_route():
+    folder = request.form['folder']
+    new_folder = request.form['new_folder']
+    new_folder_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, new_folder)
+    if not os.path.exists(new_folder_path):
+        os.makedirs(new_folder_path)
+        flash('Folder created successfully', 'success')
+    else:
+        flash('Folder already exists', 'danger')
+    return redirect(url_for('files', folder=folder))
+
+    
 @app.route('/setwt', methods=['GET', 'POST'])
 def set_wallpaper_and_theme():
     if request.method == 'POST':
@@ -325,7 +362,6 @@ def set_wallpaper_and_theme():
                            selected_wallpaper_path=selected_wallpaper_path, 
                            selected_theme=selected_theme)
     
-# Função para inserir um wallpaper
 @app.route('/upload_wallpaper', methods=['GET', 'POST'])
 def upload_wallpaper():
     if request.method == 'POST':
@@ -338,13 +374,12 @@ def upload_wallpaper():
         if file.filename == '':
             flash('No selected file', 'danger')
             return redirect(request.url)
-        print(os.path.splitext(file.filename)[1].lower())
+        
         if file and (os.path.splitext(file.filename)[1].lower() in ALLOWED_EXTENSIONS):
             filename = secure_filename(file.filename)
             file_path = os.path.join("static/wallpapers/", filename)
             file.save(file_path)
             
-            # Você pode adicionar o caminho do arquivo no banco de dados aqui se necessário
             flash('Wallpaper successfully uploaded', 'success')
         else:
             flash('File type not allowed', 'danger')
@@ -359,18 +394,14 @@ def user_management():
         users = []
     return render_template('user_management.html', users=users)
 
-
-    return render_template('user_management.html', users=None)
-
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
 def delete_user_route(user_id):
     try:
         delete_user(user_id)
         flash('User deleted successfully!', 'success')
     except Exception as e:
-        flash(str(e), 'danger')  # Mostra a mensagem de erro se tentar excluir o último usuário
+        flash(str(e), 'danger')
     return redirect(url_for('user_management'))
-
 
 @app.route('/update_password/<int:user_id>', methods=['POST'])
 def update_password_route(user_id):
@@ -389,8 +420,13 @@ def create_user_route():
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
-    return render_template('settings.html')
+    user_id = session.get('user_id', None)
+    if not user_id:
+        return redirect(url_for('login'))
 
+    wallpaper, theme = get_selected_wallpaper_and_theme(user_id)
+    return render_template('settings.html',
+                           theme=theme)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
