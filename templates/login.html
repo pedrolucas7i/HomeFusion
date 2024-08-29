@@ -24,26 +24,26 @@
         });
     </script>
     <style>
-                /* Global Styles */
+        /* Global Styles */
         * {
             box-sizing: border-box;
             font-family: "Russo One", sans-serif;
             font-weight: 400;
             font-style: normal;
             user-select: none;
-            overflow: hidden;
         }
 
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
+            overflow: hidden;
         }
 
         /* Login Page Styles */
         #login {
             background-color: #f2f2f2;
-            background-image: url('https://images.unsplash.com/photo-1691435828932-911a7801adfb?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); /* Update path if necessary */
+            background-image: url('https://cdn.pixabay.com/photo/2023/12/03/10/37/ai-generated-8427261_1280.jpg'); /* Update path if necessary */
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
@@ -51,14 +51,15 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100%;
-            min-height: 100vh;
+            height: 100vh;
+            padding: 2rem;
         }
 
         #form {
-            background-color: rgba(255, 255, 255, 0.6);
+            background-color: rgba(255, 255, 255, 0.8);
             text-align: center;
-            width: 20rem;
+            width: 100%;
+            max-width: 20rem;
             border-radius: 1rem;
             padding: 1.5rem 2.5rem;
         }
@@ -66,15 +67,19 @@
         /* Input and Button Styles */
         #form>input,
         #form>button {
+            width: 100%;
             border-radius: 1rem;
             border: 1px solid orangered;
             text-align: center;
             margin-top: 1rem;
+            padding: 0.5rem;
+            font-size: 1rem;
         }
 
         #form>button {
-            width: 50%;
             border-color: orangered;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
         #form>input:focus,
@@ -89,22 +94,27 @@
             text-align: center;
             top: 2rem;
             width: 100vw;
-            font-size: 5rem;
+            font-size: 4rem;
+            padding: 0 1rem;
+            color: white;
         }
 
         #go {
             position: absolute;
             text-align: center;
-            bottom: 10rem;
+            top: 80vh;
+            bottom: 5rem;
             width: 100vw;
         }
 
         #go>button {
-            width: 20rem;
+            max-width: 15rem;
+            width: 80%;
             border-radius: 0.5rem;
             border: 1px solid black;
             background-color: black;
             color: orangered;
+            font-size: 1rem;
         }
 
         #version {
@@ -113,7 +123,7 @@
             left: 50%;
             transform: translateX(-50%);
             color: white;
-            font-size: 1vw;
+            font-size: 1.2rem;
         }
 
         /* Shake Animations */
@@ -146,23 +156,38 @@
         /* Responsive Adjustments */
         @media (max-width: 600px) {
             #form {
-                width: 90%;
+                width: 100%;
                 padding: 1rem;
                 margin-top: 20vh;
             }
 
             #title {
-                font-size: 3rem;
+                font-size: 2.5rem;
             }
 
             #go>button {
-                width: 15rem;
+                max-width: 10rem;
+                font-size: 0.9rem;
             }
 
             #version {
-                font-size: 1.5vw;
-                left: 50%;
-                transform: translateX(-50%);
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            #title {
+                font-size: 2rem;
+                top: 1rem;
+            }
+
+            #go>button {
+                max-width: 8rem;
+                font-size: 0.8rem;
+            }
+
+            #version {
+                font-size: 0.8rem;
             }
         }
 
@@ -170,6 +195,7 @@
 </head>
 
 <body>
+    <h2 id="title">Welcome to your personal home server</h2>
     <form method="post" action="{{ url_for('login') }}">
         <div id="login">
             <div id="form">
@@ -179,11 +205,10 @@
                 <input type="password" id="password" name="password" required><br><br>
             </div>
         </div>
-        <h2 id="title">Welcome to your personal home server</h2>
         <div id="go">
             <button type="submit">Let's GO</button>
         </div>
-        <p id="version">HomeFusion V1.3</p>
+        <p id="version">HomeFusion V3.0</p>
     </form>
 </body>
 

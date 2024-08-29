@@ -342,7 +342,7 @@ def login():
 
 @app.before_request
 def check_login():
-    public_endpoints = ['login', 'CSS/login.css']
+    public_endpoints = ['login']
     if 'logged_in' not in session and request.endpoint not in public_endpoints:
         return redirect(url_for('login'))
 
