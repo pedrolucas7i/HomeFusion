@@ -1,0 +1,6 @@
+bcrypt
+psutil
+mysql.connector
+docker
+flask
+Werkzeug
