@@ -7,7 +7,6 @@ import mysql.connector
 import shutil
 import getpass
 import socket
-import docker
 from datetime import datetime
 from flask import Flask, redirect, session, url_for, render_template, request, flash, send_from_directory
 from werkzeug.utils import secure_filename
@@ -226,14 +225,8 @@ def get_local_ip():
 
 def get_cpu_usage():
     try:
-        if platform.system() == "Windows":
-            load1, load5, load15 = psutil.getloadavg()
-            cpu_usage = (load15 / os.cpu_count()) * 100
-            return cpu_usage
-        else:
-            load = os.getloadavg()[0]
-            cpu_usage = load * 100
-            return round(cpu_usage, 2)
+        cpu_usage = psutil.cpu_percent(interval=1)  
+        return round(cpu_usage, 2)
     except Exception as e:
         return "Error: " + str(e)
 
@@ -570,12 +563,12 @@ def install_custom_container():
             cursor.close()
             conn.close()
             
-            flash(f'Container {container_name} instalado com sucesso!', 'success')
+            return render_template('available_applications.html', alert="App Instaled!")
         elif system == "windows":
             return render_template('indisponivel.html')
         else:
             return render_template('indisponivel.html')
-    return render_template('install_custom_container.html')
+    return render_template('available_applications.html', alert="")
 
 """
 @app.route('/uninstall_container', methods=['POST'])
@@ -643,7 +636,7 @@ def available_applications():
         return render_template('indisponivel.html')
     elif system == "linux":
         if check_docker_installed():
-            return render_template('available_applications.html')
+            return render_template('available_applications.html', alert="")
         else:
             return redirect(url_for('install_docker'))
     else:
@@ -653,12 +646,12 @@ def available_applications():
 def install_ollama():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO docker_containers (name, port) VALUES (%s, %s)", ("ollama", 3000))
+    cursor.execute("INSERT INTO docker_containers (name, port) VALUES (%s, %s)", ("ollama", 8080))
     conn.commit()
     cursor.close()
     conn.close()
     dockers.run_ollama_container()
-    return redirect(url_for('available_applications'))
+    return redirect(url_for('available_applications'), alert="Ollama Instaled!")
 
 @app.route('/install_pihole', methods=['GET', 'POST'])
 def install_pihole():

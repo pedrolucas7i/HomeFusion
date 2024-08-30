@@ -1,6 +1,7 @@
 import subprocess
 from pathlib import Path
-import platform
+import socket
+
 
 def run_command(command, password=None):
     """Executa um comando no terminal e retorna a saída."""
@@ -12,6 +13,18 @@ def run_command(command, password=None):
     if process.returncode != 0:
         print(f"Erro ao executar comando: {stderr.decode().strip()}")
     return stdout.decode().strip()
+
+def get_local_ip():
+    try:
+        # Conecta-se a um servidor externo (por exemplo, Google DNS) para obter o IP local
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+    except Exception as e:
+        return f"Erro ao tentar obter o IP local: {e}"
+    
+    return ip
 
 def create_directory(path):
     """
@@ -61,14 +74,30 @@ def start_docker_service_linux():
 
 
 def run_ollama_container():
-    """Executa o container ollama."""
-    print("Rodando o container ollama...")
-    command = "docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama"
-    output = run_command(command)
-    print(output)
-    command = "docker run -d --network=host -v open-webui:/app/backend/data -e OLLAMA_BASE_URL=http://127.0.0.1:11434 --name open-webui --restart always ghcr.io/open-webui/open-webui:main"
-    output = run_command(command)
-    print(output)
+    """Executes the Ollama and Open WebUI containers."""
+    try:
+        print("Running the Ollama container...")
+        ollama_command = (
+            "docker run -d -v ollama:/root/.ollama "
+            "-e OLLAMA_HOST=0.0.0.0 "
+            "-p 11434:11434 --name ollama ollama/ollama"
+        )
+        ollama_output = run_command(ollama_command)
+        print(f"Ollama output: {ollama_output}")
+
+        print("Running the Open WebUI container...")
+        open_webui_command = (
+            "docker run -d --network=host "
+            "-v open-webui:/app/backend/data "
+            f"-e OLLAMA_BASE_URL=http://{get_local_ip()}:11434 "
+            "--name open-webui --restart always ghcr.io/open-webui/open-webui:main"
+        )
+        open_webui_output = run_command(open_webui_command)
+        print(f"Open WebUI output: {open_webui_output}")
+
+        print("Ollama installation finished!")
+    except Exception as e:
+        print(f"Error occurred: {e}")
 
 def run_pihole_container(password):
     """Executa o container Pi-hole."""
