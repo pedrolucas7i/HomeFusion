@@ -2,5 +2,5 @@ bcrypt
 psutil
 mysql-connector-python
 docker
-flask
+Flask
 Werkzeug
