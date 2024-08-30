@@ -1,6 +1,6 @@
 bcrypt
 psutil
-mysql.connector
+mysql-connector-python
 docker
 flask
 Werkzeug
