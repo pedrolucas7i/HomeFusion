@@ -41,6 +41,7 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY')  # Ensure there's a fallback key for development
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+HOST_DB = os.environ.get('HOST_DB')
 USER_DB = os.environ.get('USER_DB')
 PASS_DB = os.environ.get('PASS_DB')
 DB = os.environ.get('DB')
@@ -48,7 +49,7 @@ DB = os.environ.get('DB')
 # Database Functions
 def get_db_connection():
     return mysql.connector.connect(
-        host='localhost',
+        host=HOST_DB,
         user=USER_DB,
         password=PASS_DB,
         database=DB
