@@ -642,7 +642,10 @@ def available_applications():
     if system == "windows":
         return render_template('indisponivel.html')
     elif system == "linux":
-        return render_template('available_applications.html')
+        if check_docker_installed():
+            return render_template('available_applications.html')
+        else:
+            return redirect(url_for('install_docker'))
     else:
         return render_template('indisponivel.html')
     

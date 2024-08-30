@@ -26,7 +26,7 @@ def create_directory(path):
 
 def install_docker_linux(password):
     """Instala Docker em sistemas Linux."""
-    passw = password  # **Substitua com a sua senha**
+    passw = password
     print("Instalando Docker no Linux...")
 
     output = run_command("apt update -y", password=passw)
@@ -66,7 +66,7 @@ def run_ollama_container():
     command = "docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama"
     output = run_command(command)
     print(output)
-    command = "docker run -d -p 3000:8080 --add-host=localhost:host-gateway -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main"
+    command = "docker run -d --network=host -v open-webui:/app/backend/data -e OLLAMA_BASE_URL=http://127.0.0.1:11434 --name open-webui --restart always ghcr.io/open-webui/open-webui:main"
     output = run_command(command)
     print(output)
 

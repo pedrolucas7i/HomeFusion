@@ -41,5 +41,5 @@ CREATE TABLE docker_containers (
     icon VARCHAR(255) NULL
 );
 
-INSERT INTO docker_containers (name, port, is_default, icon) VALUES ('ollama', 3000, TRUE, '/static/icons/ollama.png');
+INSERT INTO docker_containers (name, port, is_default, icon) VALUES ('ollama', 8080, TRUE, '/static/icons/ollama.png');
 INSERT INTO docker_containers (name, port, is_default, icon) VALUES ('pihole', 8090, TRUE, '/static/icons/pihole.png');
