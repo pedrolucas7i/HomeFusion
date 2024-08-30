@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   {% if theme == 'dark' %}
         <link rel="stylesheet" href="{{ url_for('static', filename='CSS/dark.css') }}">
-    {% else %}
+  {% else %}
         <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
-    {% endif %}
+  {% endif %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Protest+Guerrilla&family=Russo+One&display=swap" rel="stylesheet">
@@ -79,6 +79,9 @@
         <div class="app" onclick="webcams();">
           <img src="{{ url_for('static', filename='icons/cctv-camera.png') }}" alt="">
         </div>
+        <div class="app" onclick="apps();">
+          <img src="{{ url_for('static', filename='icons/apps.png') }}" alt="">
+        </div>
       </div>
     </div>
     <div id="open">
@@ -144,6 +147,22 @@
   function webcams() {
     if (!app_run) {
       document.getElementById("open").innerHTML = "<iframe id='iframe' src='./webcams' frameborder='0'></iframe>";
+      setTimeout(function () {
+        document.getElementById("iframe").style.transform = "translateY(0%) scale(1)";
+      }, 10);
+    } else {
+      setTimeout(function () {
+        document.getElementById("iframe").style.transform = "translateY(90%) scale(0.2)";
+        setTimeout(function () {
+          document.getElementById("iframe").style.visibility = "hidden";
+        }, 900);
+      }, 10);
+    }
+    app_run = !app_run;
+  }
+  function apps() {
+    if (!app_run) {
+      document.getElementById("open").innerHTML = "<iframe id='iframe' src='./docker_apps' frameborder='0'></iframe>";
       setTimeout(function () {
         document.getElementById("iframe").style.transform = "translateY(0%) scale(1)";
       }, 10);

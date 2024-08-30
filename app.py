@@ -5,8 +5,13 @@ import bcrypt
 import psutil
 import mysql.connector
 import shutil
+import getpass
+import socket
+import docker
 from flask import Flask, redirect, session, url_for, render_template, request, flash, send_from_directory
 from werkzeug.utils import secure_filename
+import dockers
+
 
 # Configuration
 UPLOAD_FOLDER = 'uploads/'  # Directory where files will be stored
@@ -189,6 +194,32 @@ def allowed_file(filename):
     file_ext = os.path.splitext(filename)[1].lower()
     return file_ext not in NOT_ALLOWED_EXTENSIONS
 
+def find_available_port(start_port=1024, end_port=65535, excluded_ports={3000, 8090, 8453, 80, 443}):
+    """ Encontra uma porta disponível entre start_port e end_port, excluindo portas na lista excluded_ports. """
+    for port in range(start_port, end_port + 1):
+        if port not in excluded_ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                result = s.connect_ex(('127.0.0.1', port))
+                if result != 0:
+                    return port
+    raise RuntimeError("No available ports found.")
+
+def check_docker_installed():
+    try:
+        result = subprocess.run(['docker', '--version'], shell=True, capture_output=True, text=True, check=True)
+        # Se o comando for bem-sucedido, o Docker está instalado
+        print("Docker está instalado:")
+        print(result.stdout)
+        return True
+    except subprocess.CalledProcessError as e:
+        print("Docker não está instalado. Detalhes:")
+        print(e.stderr)
+        return False
+    except FileNotFoundError:
+        # Se o comando não for encontrado, o Docker não está instalado
+        print("Docker não está instalado. O comando 'docker' não foi encontrado.")
+        return False
+
 def get_cpu_usage():
     try:
         if platform.system() == "Windows":
@@ -359,6 +390,10 @@ def create_folder_route():
 
 @app.errorhandler(405)
 def method_not_allowed(e):
+    user_id = session.get('user_id', None)
+    if not user_id:
+        return redirect(url_for('login'))
+    
     # Verificar se o erro 405 ocorreu na rota /files/
     if request.path.startswith('/files'):
         flash('It is not allowed to create files in the root directory.', 'danger')
@@ -447,6 +482,134 @@ def settings():
     wallpaper, theme = get_selected_wallpaper_and_theme(user_id)
     return render_template('settings.html',
                            theme=theme)
+
+@app.route('/prompt', methods=['GET', 'POST'])
+def prompt():
+    user_id = session.get('user_id', None)
+    if not user_id:
+        return redirect(url_for('login'))
+    if platform.system() == "Windows":
+        userhostfile = os.getcwd() + " $ "
+    else:
+        userhostfile = getpass.getuser() + "@" + socket.gethostname() + ":/" + os.path.basename(os.getcwd()) + "$ "
+    if request.method == 'POST':
+        command = request.form['command']
+        try:
+            result = subprocess.run(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output = result.stdout.decode("utf-8") + result.stderr.decode("utf-8")
+        except Exception as e:
+            output = str(e)
+
+        return render_template('prompt.html',
+                               userhostfile=userhostfile,
+                               output=output)
+    return render_template('prompt.html',
+                           userhostfile=userhostfile,
+                           output="")
+
+@app.route('/install_docker', methods=['GET', 'POST'])
+def install_docker():
+    if request.method == 'POST':
+        system = platform.system().lower()
+        if system == "linux":
+            dockers.install_docker_linux()
+        elif system == "windows":
+            return render_template('indisponivel.html')
+        else:
+            return render_template('indisponivel.html')
+        flash('Docker instalado com sucesso!', 'success')
+    return render_template('install_docker.html')
+
+@app.route('/uninstall_docker', methods=['POST'])
+def uninstall_docker():
+    system = platform.system().lower()
+    if system == "linux":
+        dockers.run_command("sudo apt-get remove --purge -y docker-ce")
+        dockers.run_command("sudo apt-get autoremove -y")
+    elif system == "windows":
+        return render_template('indisponivel.html')
+    else:
+        return render_template('indisponivel.html')
+    flash('Docker desinstalado com sucesso!', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/install_custom_container', methods=['GET', 'POST'])
+def install_custom_container():
+    if request.method == 'POST':
+        system = platform.system().lower()
+        if system == "linux":
+            container_name = request.form['container_name']
+            container_image = request.form['container_image']
+
+            # Encontrar uma porta disponível
+            port = find_available_port()
+
+            # Comando Docker com mapeamento de porta
+            container_command = f"docker run -d --name {container_name} -p {port}:80 {container_image}"
+            dockers.run_command(container_command)
+
+            flash(f'Container {container_name} instalado com sucesso na porta {port}!', 'success')
+        elif system == "windows":
+            return render_template('indisponivel.html')
+        else:
+            return render_template('indisponivel.html')
+        
+    return render_template('install_custom_container.html')
+
+
+@app.route('/uninstall_container', methods=['POST'])
+def uninstall_container():
+    system = platform.system().lower()
+    if system == "linux":
+        container_name = request.form['container_name']
+        dockers.run_command(f"docker stop {container_name}")
+        dockers.run_command(f"docker rm {container_name}")
+        flash(f'Container {container_name} desinstalado com sucesso!', 'success')
+        return redirect(url_for('dashboard'))
+    elif system == "windows":
+        return render_template('indisponivel.html')
+    else:
+        return render_template('indisponivel.html')
+
+
+@app.route('/docker_apps')
+def docker_apps():
+    system = platform.system().lower()
+    if system == "windows":
+        return render_template('indisponivel.html')
+    elif system == "linux":
+        if check_docker_installed():
+            try:
+                # Executar o comando `docker ps` para obter a lista de containers em execução com detalhes formatados
+                result = subprocess.run(
+                    ['docker', 'ps', '--format', '{{.Names}} {{.Image}} {{.Status}}'], 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE, 
+                    text=True,
+                    check=True
+                )
+                
+                container_info_lines = result.stdout.strip().split('\n')
+                apps = []
+
+                for line in container_info_lines:
+                    parts = line.split(' ', 2)
+                    if len(parts) >= 3:
+                        app_info = {
+                            'name': parts[0],
+                            'image': parts[1],
+                            'status': parts[2],
+                            'icon': 'static/icons/application.png'  # Substitua com ícones reais ou específicos
+                        }
+                        apps.append(app_info)
+
+                return render_template('applications.html', apps=apps)
+            except subprocess.CalledProcessError as e:
+                flash(f'Erro ao obter aplicações Docker: {str(e)}', 'danger')
+                print(f'Erro ao obter aplicações Docker: {str(e)}')
+        else:
+            return redirect(url_for('install_docker'))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
