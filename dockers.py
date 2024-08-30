@@ -2,13 +2,16 @@ import subprocess
 from pathlib import Path
 import platform
 
-def run_command(command):
-    """Executa um comando no shell e imprime o resultado ou erro."""
-    try:
-        result = subprocess.run(command, shell=True, check=True, text=True, capture_output=True)
-        print(result.stdout)
-    except subprocess.CalledProcessError as e:
-        print(f"Erro ao executar o comando: {e.stderr}")
+def run_command(command, password=None):
+    """Executa um comando no terminal e retorna a saída."""
+    if password:
+        # Use echo e pipe para fornecer a senha ao sudo
+        command = f"echo {password} | sudo -S {command}"
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    if process.returncode != 0:
+        print(f"Erro ao executar comando: {stderr.decode().strip()}")
+    return stdout.decode().strip()
 
 def create_directory(path):
     """
@@ -21,15 +24,29 @@ def create_directory(path):
     directory.mkdir(parents=True, exist_ok=True)
     print(f"Diretório criado: {directory}")
 
-def install_docker_linux():
+def install_docker_linux(password):
     """Instala Docker em sistemas Linux."""
+    passw = password  # **Substitua com a sua senha**
     print("Instalando Docker no Linux...")
-    run_command("sudo apt-get update")
-    run_command("sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common")
-    run_command("curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -")
-    run_command('sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"')
-    run_command("sudo apt-get update")
-    run_command("sudo apt-get install -y docker-ce")
+
+    output = run_command("apt update", password=passw)
+    print(output)
+    output = run_command("apt install apt-transport-https ca-certificates curl software-properties-common", password=passw)
+    print(output)
+    output = run_command('curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -')
+    print(output)
+    output = run_command('add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"', password=passw)
+    print(output)
+    output = run_command('apt update', password=passw)
+    print(output)
+    output = run_command('apt-cache policy docker-ce')
+    print(output)
+    output = run_command('apt install docker-ce', password=passw)
+    print(output)
+    output = run_command('systemctl status docker', password=passw)
+    print(output)
+    output = run_command('usermod -aG docker ${USER}', password=passw)
+    print(output)
 
 def install_docker_windows():
     """Instala Docker no Windows usando winget."""
@@ -41,6 +58,7 @@ def start_docker_service_linux():
     print("Iniciando o serviço Docker no Linux...")
     run_command("sudo systemctl start docker")
     run_command("sudo systemctl enable docker")
+
 
 def run_ollama_container():
     """Executa o container ollama."""

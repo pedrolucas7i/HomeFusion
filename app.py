@@ -195,16 +195,6 @@ def allowed_file(filename):
     file_ext = os.path.splitext(filename)[1].lower()
     return file_ext not in NOT_ALLOWED_EXTENSIONS
 
-def find_available_port(start_port=1024, end_port=65535, excluded_ports={3000, 8090, 8453, 80, 443}):
-    """ Encontra uma porta disponível entre start_port e end_port, excluindo portas na lista excluded_ports. """
-    for port in range(start_port, end_port + 1):
-        if port not in excluded_ports:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                result = s.connect_ex(('127.0.0.1', port))
-                if result != 0:
-                    return port
-    raise RuntimeError("No available ports found.")
-
 def check_docker_installed():
     try:
         result = subprocess.run(['docker', '--version'], shell=True, capture_output=True, text=True, check=True)
@@ -257,13 +247,14 @@ def get_wifi_signal():
                 if "Signal" in line:
                     signal_level = line.split(":")[1].strip().replace("%", "")
                     return int(signal_level)
-        else:
-            output = subprocess.getoutput("nmcli dev wifi")
+        elif platform.system == "linux":
+            output = subprocess.getoutput("nmcli -f SSID,SIGNAL dev wifi")
             for line in output.splitlines():
                 if "*" in line:
                     parts = line.split()
-                    signal_level = parts[6].replace('%', '')
-                    return int(signal_level)
+                    if len(parts) > 1:
+                        signal_level = parts[1].replace('%', '')
+                        return int(signal_level)
     except Exception as e:
         return "Error: " + str(e)
 
@@ -513,7 +504,8 @@ def install_docker():
     if request.method == 'POST':
         system = platform.system().lower()
         if system == "linux":
-            dockers.install_docker_linux()
+            password = request.form['password']
+            dockers.install_docker_linux(password)
         elif system == "windows":
             return render_template('indisponivel.html')
         else:
@@ -540,16 +532,16 @@ def install_custom_container():
         system = platform.system().lower()
         if system == "linux":
             container_name = request.form['container_name']
-            container_image = request.form['container_image']
-
-            # Encontrar uma porta disponível
-            port = find_available_port()
-
-            # Comando Docker com mapeamento de porta
-            container_command = f"docker run -d --name {container_name} -p {port}:80 {container_image}"
-            dockers.run_command(container_command)
-
-            flash(f'Container {container_name} instalado com sucesso na porta {port}!', 'success')
+            command = request.form['command']
+            
+            # Executa o comando Docker fornecido pelo usuário
+            dockers.run_command(command)
+            
+            # Simula a instalação registrando o container no arquivo de texto
+            with open('docker_containers.txt', 'a') as f:
+                f.write(f"{container_name}\n")
+                
+            flash(f'Container {container_name} instalado com sucesso!', 'success')
         elif system == "windows":
             return render_template('indisponivel.html')
         else:
@@ -558,19 +550,34 @@ def install_custom_container():
     return render_template('install_custom_container.html')
 
 
+
 @app.route('/uninstall_container', methods=['POST'])
 def uninstall_container():
     system = platform.system().lower()
     if system == "linux":
         container_name = request.form['container_name']
+        
+        # Executa os comandos Docker para parar e remover o container
         dockers.run_command(f"docker stop {container_name}")
         dockers.run_command(f"docker rm {container_name}")
+        
+        # Remove o container do arquivo de texto
+        if os.path.exists('docker_containers.txt'):
+            with open('docker_containers.txt', 'r') as f:
+                lines = f.readlines()
+                
+            with open('docker_containers.txt', 'w') as f:
+                for line in lines:
+                    if not line.strip() == container_name:
+                        f.write(line)
+                        
         flash(f'Container {container_name} desinstalado com sucesso!', 'success')
         return redirect(url_for('dashboard'))
     elif system == "windows":
         return render_template('indisponivel.html')
     else:
         return render_template('indisponivel.html')
+
 
 
 @app.route('/docker_apps')
@@ -581,31 +588,16 @@ def docker_apps():
     elif system == "linux":
         if check_docker_installed():
             try:
-                # Executar o comando `docker ps` para obter a lista de containers em execução com detalhes formatados
-                result = subprocess.run(
-                    ['docker', 'ps', '--format', '{{.Names}} {{.Image}} {{.Status}}'], 
-                    stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE, 
-                    text=True,
-                    check=True
-                )
-                
-                container_info_lines = result.stdout.strip().split('\n')
-                apps = []
+                # Caminho para o arquivo que contém as informações dos containers
+                file_path = './docker_containers.txt'
 
-                for line in container_info_lines:
-                    parts = line.split(' ', 2)
-                    if len(parts) >= 3:
-                        app_info = {
-                            'name': parts[0],
-                            'image': parts[1],
-                            'status': parts[2],
-                            'icon': 'static/icons/application.png'  # Substitua com ícones reais ou específicos
-                        }
-                        apps.append(app_info)
+                with open(file_path, 'r') as file:
+                    container_info_lines = file.readlines()
+
+                apps = [line.strip() for line in container_info_lines]
 
                 return render_template('applications.html', apps=apps)
-            except subprocess.CalledProcessError as e:
+            except Exception as e:
                 flash(f'Erro ao obter aplicações Docker: {str(e)}', 'danger')
                 print(f'Erro ao obter aplicações Docker: {str(e)}')
         else:
