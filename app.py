@@ -8,6 +8,7 @@ import shutil
 import getpass
 import socket
 import docker
+from datetime import datetime
 from flask import Flask, redirect, session, url_for, render_template, request, flash, send_from_directory
 from werkzeug.utils import secure_filename
 import dockers
@@ -210,6 +211,18 @@ def check_docker_installed():
         # Se o comando não for encontrado, o Docker não está instalado
         print("Docker não está instalado. O comando 'docker' não foi encontrado.")
         return False
+
+def get_local_ip():
+    try:
+        # Conecta-se a um servidor externo (por exemplo, Google DNS) para obter o IP local
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+    except Exception as e:
+        return f"Erro ao tentar obter o IP local: {e}"
+    
+    return ip
 
 def get_cpu_usage():
     try:
@@ -499,6 +512,14 @@ def prompt():
                            userhostfile=userhostfile,
                            output="")
 
+
+
+
+
+
+
+# Docker's
+
 @app.route('/install_docker', methods=['GET', 'POST'])
 def install_docker():
     if request.method == 'POST':
@@ -506,25 +527,28 @@ def install_docker():
         if system == "linux":
             password = request.form['password']
             dockers.install_docker_linux(password)
+            flash('Docker instalado com sucesso!', 'success')
         elif system == "windows":
             return render_template('indisponivel.html')
         else:
             return render_template('indisponivel.html')
-        flash('Docker instalado com sucesso!', 'success')
     return render_template('install_docker.html')
 
+"""
 @app.route('/uninstall_docker', methods=['POST'])
 def uninstall_docker():
     system = platform.system().lower()
     if system == "linux":
-        dockers.run_command("sudo apt-get remove --purge -y docker-ce")
-        dockers.run_command("sudo apt-get autoremove -y")
+        password=request.form['password']
+        dockers.run_command("apt-get remove --purge -y docker-ce", password)
+        dockers.run_command("apt-get autoremove -y", password)
+        flash('Docker desinstalado com sucesso!', 'success')
     elif system == "windows":
         return render_template('indisponivel.html')
     else:
         return render_template('indisponivel.html')
-    flash('Docker desinstalado com sucesso!', 'success')
     return redirect(url_for('dashboard'))
+"""
 
 @app.route('/install_custom_container', methods=['GET', 'POST'])
 def install_custom_container():
@@ -533,53 +557,51 @@ def install_custom_container():
         if system == "linux":
             container_name = request.form['container_name']
             command = request.form['command']
+            container_port = request.form['port']  # Adiciona o campo para a porta
             
             # Executa o comando Docker fornecido pelo usuário
             dockers.run_command(command)
             
-            # Simula a instalação registrando o container no arquivo de texto
-            with open('docker_containers.txt', 'a') as f:
-                f.write(f"{container_name}\n")
-                
+            # Armazena o container no banco de dados
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO docker_containers (name, port) VALUES (%s, %s)", (container_name, container_port))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
             flash(f'Container {container_name} instalado com sucesso!', 'success')
         elif system == "windows":
             return render_template('indisponivel.html')
         else:
             return render_template('indisponivel.html')
-        
     return render_template('install_custom_container.html')
 
-
-
+"""
 @app.route('/uninstall_container', methods=['POST'])
 def uninstall_container():
     system = platform.system().lower()
     if system == "linux":
         container_name = request.form['container_name']
-        
-        # Executa os comandos Docker para parar e remover o container
         dockers.run_command(f"docker stop {container_name}")
         dockers.run_command(f"docker rm {container_name}")
         
-        # Remove o container do arquivo de texto
-        if os.path.exists('docker_containers.txt'):
-            with open('docker_containers.txt', 'r') as f:
-                lines = f.readlines()
-                
-            with open('docker_containers.txt', 'w') as f:
-                for line in lines:
-                    if not line.strip() == container_name:
-                        f.write(line)
-                        
+        # Remove o container do banco de dados
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM docker_containers WHERE name = %s", (container_name,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
         flash(f'Container {container_name} desinstalado com sucesso!', 'success')
         return redirect(url_for('dashboard'))
     elif system == "windows":
         return render_template('indisponivel.html')
     else:
         return render_template('indisponivel.html')
-
-
-
+"""
+        
 @app.route('/docker_apps')
 def docker_apps():
     system = platform.system().lower()
@@ -588,15 +610,25 @@ def docker_apps():
     elif system == "linux":
         if check_docker_installed():
             try:
-                # Caminho para o arquivo que contém as informações dos containers
-                file_path = './docker_containers.txt'
-
-                with open(file_path, 'r') as file:
-                    container_info_lines = file.readlines()
-
-                apps = [line.strip() for line in container_info_lines]
-
-                return render_template('applications.html', apps=apps)
+                # Obtém informações dos containers do banco de dados
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT name, port, icon FROM docker_containers WHERE is_default = FALSE")
+                containers = cursor.fetchall()
+                cursor.close()
+                conn.close()
+                apps = [
+                    {
+                        'name': container[0], 
+                        'port': container[1], 
+                        'icon': container[2] if container[2] is not None else '/static/icons/default_app.png'
+                    }
+                    for container in containers
+                ]
+                print(apps)
+                if apps == None:
+                    apps= []
+                return render_template('applications.html', apps=apps, ip=get_local_ip())
             except Exception as e:
                 flash(f'Erro ao obter aplicações Docker: {str(e)}', 'danger')
                 print(f'Erro ao obter aplicações Docker: {str(e)}')
@@ -604,6 +636,51 @@ def docker_apps():
             return redirect(url_for('install_docker'))
 
 
+@app.route('/available_applications')
+def available_applications():
+    system = platform.system().lower()
+    if system == "windows":
+        return render_template('indisponivel.html')
+    elif system == "linux":
+        return render_template('available_applications.html')
+    else:
+        return render_template('indisponivel.html')
+    
+@app.route('/install_ollama', methods=['POST'])
+def install_ollama():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO docker_containers (name, port) VALUES (%s, %s)", ("ollama", 3000))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    dockers.run_ollama_container()
+    return redirect(url_for('available_applications'))
+
+@app.route('/install_pihole', methods=['GET', 'POST'])
+def install_pihole():
+    if request.method == 'POST':
+        # Obtém a senha do formulário
+        passw = request.form['password']
+        
+        # Adiciona o Pi-hole ao banco de dados
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO docker_containers (name, port) VALUES (%s, %s)", ("pi-hole", 8090))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        # Executa o comando para rodar o container Pi-hole com a senha fornecida
+        dockers.run_pihole_container(passw)
+        
+        flash('Pi-hole instalado com sucesso!', 'success')
+        return redirect(url_for('docker_apps'))
+    
+    # Renderiza o template com o formulário de instalação
+    return render_template('install_pihole.html')
+
+        
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':

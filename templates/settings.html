@@ -23,6 +23,10 @@
     function sessions() {
         document.getElementById("window").src = "{{ url_for('user_management') }}";
     }
+
+    function apps() {
+        document.getElementById("window").src = "{{ url_for('available_applications') }}";
+    }
 </script>
 
 <body>
@@ -32,7 +36,7 @@
             <div>
                 <p onclick="wallpaper_theme();">Visuals</p>
                 <p onclick="sessions();">Sessions</p>
-                <p>Aplications</p>
+                <p onclick="apps();">Aplications</p>
             </div>
         </div>
         <iframe id="window" src="{{ url_for('set_wallpaper_and_theme') }}" frameborder="0"></iframe>

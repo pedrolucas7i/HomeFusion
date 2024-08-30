@@ -29,19 +29,19 @@ def install_docker_linux(password):
     passw = password  # **Substitua com a sua senha**
     print("Instalando Docker no Linux...")
 
-    output = run_command("apt update", password=passw)
+    output = run_command("apt update -y", password=passw)
     print(output)
-    output = run_command("apt install apt-transport-https ca-certificates curl software-properties-common", password=passw)
+    output = run_command("apt install apt-transport-https ca-certificates curl software-properties-common -y", password=passw)
     print(output)
     output = run_command('curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -')
     print(output)
     output = run_command('add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"', password=passw)
     print(output)
-    output = run_command('apt update', password=passw)
+    output = run_command('apt update -y', password=passw)
     print(output)
     output = run_command('apt-cache policy docker-ce')
     print(output)
-    output = run_command('apt install docker-ce', password=passw)
+    output = run_command('apt install docker-ce -y', password=passw)
     print(output)
     output = run_command('systemctl status docker', password=passw)
     print(output)
@@ -64,8 +64,11 @@ def run_ollama_container():
     """Executa o container ollama."""
     print("Rodando o container ollama...")
     command = "docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama"
-    run_command(command)
-    command = "docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main"
+    output = run_command(command)
+    print(output)
+    command = "docker run -d -p 3000:8080 --add-host=localhost:host-gateway -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main"
+    output = run_command(command)
+    print(output)
 
 def run_pihole_container(password):
     """Executa o container Pi-hole."""
