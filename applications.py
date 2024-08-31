@@ -50,6 +50,8 @@ def install_ollama(password):
 
         print("Ollama installed!!!")
 
+
+        """
         print("Running the Open WebUI installer...")
 
         open_webui_commands = [
@@ -75,5 +77,7 @@ def install_ollama(password):
             print(output)
 
         print("Ollama and Open WebUI installation finished!")
+        """
+        
     except Exception as e:
         print(f"Error occurred: {e}")

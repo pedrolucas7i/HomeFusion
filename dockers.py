@@ -73,6 +73,17 @@ def start_docker_service_linux():
     run_command("sudo systemctl enable docker")
 
 
+def run_openwebui_container(password):
+    print("Running the Open WebUI container...")
+    open_webui_command = (
+        "docker run -d --network=host "
+        "-v open-webui:/app/backend/data "
+        f"-e OLLAMA_BASE_URL=http://{get_local_ip()}:11434 "
+        "--name open-webui --restart always ghcr.io/open-webui/open-webui:main"
+    )
+    open_webui_output = run_command(open_webui_command, password=password)
+    print(f"Open WebUI output: {open_webui_output}")
+
 def run_ollama_container():
     """Executes the Ollama and Open WebUI containers."""
     try:

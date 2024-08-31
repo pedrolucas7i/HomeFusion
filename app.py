@@ -582,10 +582,11 @@ def apps():
             if check_docker_installed():
                 docker_apps = get_docker_applications()
             else:
-                docker_alert = "Docker não instalado. Alguns aplicativos podem não estar disponíveis."
+                return redirect(url_for('install_docker'))
         except Exception as e:
             docker_alert = f"Erro ao obter aplicativos Docker: {str(e)}"
-    
+    else:
+        return render_template('indisponivel.html')
     return render_template('applications.html', docker_alert=docker_alert, docker_apps=docker_apps, non_docker_apps=non_docker_apps)
 
 def get_docker_applications():
@@ -616,21 +617,36 @@ def get_non_docker_applications():
 
 @app.route('/view')
 def view():
-    docker_apps = get_docker_applications()
-    non_docker_apps = get_non_docker_applications()
-    return render_template('view.html', docker_apps=docker_apps, non_docker_apps=non_docker_apps, ip=get_local_ip())
+    system = platform.system().lower()
+    if system == "linux":
+        if check_docker_installed():
+            docker_apps = get_docker_applications()
+            non_docker_apps = get_non_docker_applications()
+            return render_template('view.html', docker_apps=docker_apps, non_docker_apps=non_docker_apps, ip=get_local_ip())
+        else:
+            return redirect(url_for('install_docker'))
+    else:
+        return render_template('indisponivel.html')
 
     
 @app.route('/install_ollama', methods=['POST'])
 def install_ollama():
     global ollama_is_installed
-    if request.method == 'POST':
-        passw = request.form['password']
-        applications.install_ollama(passw)
-        ollama_is_installed = True
-        return redirect(url_for('view'))
-    return render_template('install_ollama.html')
-
+    system = platform.system().lower()
+    if system == "linux":
+        if check_docker_installed():
+            if request.method == 'POST':
+                passw = request.form['password']
+                applications.install_ollama(passw)
+                dockers.run_openwebui_container(passw)
+                ollama_is_installed = True
+                return redirect(url_for('view'))
+            return render_template('install_ollama.html')
+        else:
+            return redirect(url_for('install_docker'))
+    else:
+        return render_template('indisponivel.html')
+    
 @app.route('/install_pihole', methods=['GET', 'POST'])
 def install_pihole():
     if request.method == 'POST':
