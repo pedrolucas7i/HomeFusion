@@ -82,6 +82,9 @@
         <div class="app" onclick="apps();">
           <img src="{{ url_for('static', filename='icons/apps.png') }}" alt="">
         </div>
+        <div class="app" onclick="store();">
+          <img src="{{ url_for('static', filename='icons/shop.png') }}" alt="">
+        </div>
       </div>
     </div>
     <div id="open">
@@ -161,6 +164,23 @@
     app_run = !app_run;
   }
   function apps() {
+    if (!app_run) {
+      document.getElementById("open").innerHTML = "<iframe id='iframe' src='./view' frameborder='0'></iframe>";
+      setTimeout(function () {
+        document.getElementById("iframe").style.transform = "translateY(0%) scale(1)";
+      }, 10);
+    } else {
+      setTimeout(function () {
+        document.getElementById("iframe").style.transform = "translateY(90%) scale(0.2)";
+        setTimeout(function () {
+          document.getElementById("iframe").style.visibility = "hidden";
+        }, 900);
+      }, 10);
+    }
+    app_run = !app_run;
+  }
+
+  function store() {
     if (!app_run) {
       document.getElementById("open").innerHTML = "<iframe id='iframe' src='./apps' frameborder='0'></iframe>";
       setTimeout(function () {

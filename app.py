@@ -14,9 +14,6 @@ import dockers
 import applications
 import time
 
-
-ollama_is_installed = False
-
 # Configuration
 UPLOAD_FOLDER = 'uploads/'  # Directory where files will be stored
 NOT_ALLOWED_EXTENSIONS = {
@@ -226,6 +223,16 @@ def get_local_ip():
         return f"Erro ao tentar obter o IP local: {e}"
     
     return ip
+
+def check_ollama_is_installed(host='127.0.0.1', port=11434):
+    """Verifica se a porta está aberta no host especificado."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(2)  # Define um tempo limite para a conexão
+        try:
+            s.connect((host, port))
+            return True
+        except (socket.timeout, ConnectionRefusedError):
+            return False
 
 def get_cpu_usage():
     try:
@@ -611,7 +618,7 @@ def get_docker_applications():
 def get_non_docker_applications():
     global ollama_is_installed
     return [
-    {'name': 'ollama', 'install_route':'install_ollama', 'port': 8080, 'installed': ollama_is_installed}
+    {'name': 'ollama', 'install_route':'install_ollama', 'port': 8080, 'installed': check_ollama_is_installed()}
     ]
 
 
@@ -637,7 +644,7 @@ def install_ollama():
         if check_docker_installed():
             if request.method == 'POST':
                 passw = request.form['password']
-                applications.install_ollama(passw)
+                dockers.run_ollama_container(passw)
                 dockers.run_openwebui_container(passw)
                 ollama_is_installed = True
                 return redirect(url_for('view'))

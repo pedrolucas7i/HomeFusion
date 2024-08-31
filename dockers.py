@@ -76,15 +76,12 @@ def start_docker_service_linux():
 def run_openwebui_container(password):
     print("Running the Open WebUI container...")
     open_webui_command = (
-        "docker run -d --network=host "
-        "-v open-webui:/app/backend/data "
-        f"-e OLLAMA_BASE_URL=http://{get_local_ip()}:11434 "
-        "--name open-webui --restart always ghcr.io/open-webui/open-webui:main"
+        "docker run -d --network=host -v open-webui:/app/backend/data -e OLLAMA_BASE_URL=http://127.0.0.1:11434 --name open-webui --restart always ghcr.io/open-webui/open-webui:main"
     )
     open_webui_output = run_command(open_webui_command, password=password)
     print(f"Open WebUI output: {open_webui_output}")
 
-def run_ollama_container():
+def run_ollama_container(password):
     """Executes the Ollama and Open WebUI containers."""
     try:
         print("Running the Ollama container...")
@@ -93,18 +90,8 @@ def run_ollama_container():
             "-e OLLAMA_HOST=0.0.0.0 "
             "-p 11434:11434 --name ollama ollama/ollama"
         )
-        ollama_output = run_command(ollama_command)
+        ollama_output = run_command(ollama_command, password=password)
         print(f"Ollama output: {ollama_output}")
-
-        print("Running the Open WebUI container...")
-        open_webui_command = (
-            "docker run -d --network=host "
-            "-v open-webui:/app/backend/data "
-            f"-e OLLAMA_BASE_URL=http://{get_local_ip()}:11434 "
-            "--name open-webui --restart always ghcr.io/open-webui/open-webui:main"
-        )
-        open_webui_output = run_command(open_webui_command)
-        print(f"Open WebUI output: {open_webui_output}")
 
         print("Ollama installation finished!")
     except Exception as e:
