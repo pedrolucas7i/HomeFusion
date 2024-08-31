@@ -81,6 +81,10 @@ def run_openwebui_container(password):
     open_webui_output = run_command(open_webui_command, password=password)
     print(f"Open WebUI output: {open_webui_output}")
 
+
+def start_ollama_container(password):
+    run_command("docker start ollama", password=password)
+
 def run_ollama_container(password):
     """Executes the Ollama and Open WebUI containers."""
     try:

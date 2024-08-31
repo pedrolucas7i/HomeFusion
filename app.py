@@ -224,6 +224,16 @@ def get_local_ip():
     
     return ip
 
+def check_webui_is_installed(host='127.0.0.1', port=8080):
+    """Verifica se a porta está aberta no host especificado."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(2)  # Define um tempo limite para a conexão
+        try:
+            s.connect((host, port))
+            return True
+        except (socket.timeout, ConnectionRefusedError):
+            return False
+        
 def check_ollama_is_installed(host='127.0.0.1', port=11434):
     """Verifica se a porta está aberta no host especificado."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -616,7 +626,7 @@ def get_docker_applications():
 def get_non_docker_applications():
     global ollama_is_installed
     return [
-    {'name': 'ollama', 'install_route':'install_ollama', 'port': 8080, 'installed': check_ollama_is_installed()}
+    {'name': 'ollama', 'install_route':'install_ollama', 'port': 8080, 'installed': check_webui_is_installed()}
     ]
 
 
@@ -627,13 +637,31 @@ def view():
         if check_docker_installed():
             docker_apps = get_docker_applications()
             non_docker_apps = get_non_docker_applications()
-            return render_template('view.html', docker_apps=docker_apps, non_docker_apps=non_docker_apps, ip=get_local_ip())
+            if check_ollama_is_installed():
+                return render_template('view.html', docker_apps=docker_apps, non_docker_apps=non_docker_apps, ip=get_local_ip())
+            else:
+                return redirect(url_for('start_ollama'))
         else:
             return redirect(url_for('install_docker'))
     else:
         return render_template('indisponivel.html')
 
-    
+
+@app.route('/start_ollama', methods=['POST'])
+def start_ollama():
+    system = platform.system().lower()
+    if system == "linux":
+        if check_docker_installed():
+            if request.method == 'POST':
+                passw = request.form['password']
+                dockers.start_ollama_container(passw)
+                return redirect(url_for('view'))
+            return render_template('start_ollama.html')
+        else:
+            return redirect(url_for('install_docker'))
+    else:
+        return render_template('indisponivel.html')
+
 @app.route('/install_ollama', methods=['POST'])
 def install_ollama():
     global ollama_is_installed
