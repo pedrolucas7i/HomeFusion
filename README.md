@@ -1,6 +1,6 @@
 # HomeFusion
  A Home Server with many features
-
+![HomeFusion](screenshots/dashboard.png)
 ## Project Setup
 
 Install MySQL Server:
