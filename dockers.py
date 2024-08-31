@@ -83,7 +83,7 @@ def run_openwebui_container(password):
 
 
 def start_ollama_container(password):
-    run_command("docker start ollama", password=password)
+    print(run_command("docker start ollama", password=password))
 
 def run_ollama_container(password):
     """Executes the Ollama and Open WebUI containers."""

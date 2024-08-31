@@ -36,7 +36,7 @@
 <body>
     <div class="container">
         <h1>Start Ollama</h1>
-        <form action="{{ url_for('install_ollama') }}" method="post">
+        <form action="{{ url_for('start_ollama') }}" method="post">
             <label for="password">Machine Password:</label>
             <input type="password" id="password" name="password" placeholder="Enter Machine Password" required>
             <button type="submit">Start Ollama</button>

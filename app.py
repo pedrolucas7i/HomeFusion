@@ -647,7 +647,7 @@ def view():
         return render_template('indisponivel.html')
 
 
-@app.route('/start_ollama', methods=['POST'])
+@app.route('/start_ollama', methods=['GET', 'POST'])
 def start_ollama():
     system = platform.system().lower()
     if system == "linux":
