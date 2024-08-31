@@ -15,10 +15,7 @@ import applications
 import time
 
 
-non_docker_ports = {
-    'ollama': 8080,
-    # Adicione outras portas conforme necessário
-}
+ollama_is_installed = False
 
 # Configuration
 UPLOAD_FOLDER = 'uploads/'  # Directory where files will be stored
@@ -611,29 +608,11 @@ def get_docker_applications():
     return apps
 
 def get_non_docker_applications():
-    apps = []
-    try:
-        with open('non_docker_apps.txt', 'r') as file:
-            for line in file:
-                name, route = line.strip().split(',')
-                port = non_docker_ports.get(name)
-                if port:
-                    apps.append({'name': name, 'install_route': route, 'port': port})
-    except Exception as e:
-        print(f"Erro ao ler non_docker_apps.txt: {str(e)}")
-    return apps
+    global ollama_is_installed
+    return [
+    {'name': 'ollama', 'install_route':'install_ollama', 'port': 8080, 'installed': ollama_is_installed}
+    ]
 
-
-def remove_installed_app(app_name):
-    try:
-        with open('non_docker_apps.txt', 'r') as file:
-            lines = file.readlines()
-        with open('non_docker_apps.txt', 'w') as file:
-            for line in lines:
-                if not line.startswith(app_name + ","):
-                    file.write(line)
-    except Exception as e:
-        print(f"Erro ao atualizar non_docker_apps.txt: {str(e)}")
 
 @app.route('/view')
 def view():
@@ -644,10 +623,11 @@ def view():
     
 @app.route('/install_ollama', methods=['POST'])
 def install_ollama():
+    global ollama_is_installed
     if request.method == 'POST':
         passw = request.form['password']
-        remove_installed_app("ollama")
         applications.install_ollama(passw)
+        ollama_is_installed = True
         return redirect(url_for('view'))
     return render_template('install_ollama.html')
 

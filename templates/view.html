@@ -6,7 +6,6 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
             margin: 0;
             padding: 0;
         }
@@ -34,11 +33,6 @@
         #app-list a:hover {
             background-color: #d5d5d5;
         }
-        #iframe-container {
-            width: 75%;
-            height: 100vh;
-            overflow: hidden;
-        }
         iframe {
             width: 100%;
             height: 100%;
@@ -58,16 +52,14 @@
                 {% endif %}
             {% endfor %}
             {% for app in non_docker_apps %}
-            <li>
-                <a href="#" onclick="loadApp('{{ get_local_ip() }}', '{{ app.port }}')">{{ app.name }}</a>
-            </li>
+                {% if app.installed %}
+                    <li>
+                        <a href="#" onclick="loadApp('{{ get_local_ip() }}', '{{ app.port }}')">{{ app.name }}</a>
+                    </li>
+                {% endif %}
             {% endfor %}
         </ul>
     </div>
-    <div id="iframe-container">
-        <iframe id="app-frame" src=""></iframe>
-    </div>
-
     <script>
         function loadApp(ip, port) {
             const iframe = document.getElementById('view');
