@@ -2,94 +2,104 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Installed Docker Applications</title>
+    <title>Aplicativos Disponíveis</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
             background-color: #f4f4f4;
-            width: 100vw;
-            height: 100vh;
         }
-        .container {
-            padding: 20px;
+        h1, h2 {
+            color: #333;
+            margin-bottom: 10px;
         }
-        .app-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            padding: 20px;
+        ul {
+            list-style-type: none;
+            padding: 0;
         }
-        .app {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            border: 1px solid #ddd;
+        li {
+            margin-bottom: 20px;
+            background: #fff;
             border-radius: 8px;
-            padding: 10px;
-            background-color: #fff;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .app:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .app img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 10px;
-        }
-        .app-name {
-            margin-top: 10px;
-            text-align: center;
-        }
-        #app-frame-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 15px;
             display: flex;
-            justify-content: center;
             align-items: center;
         }
-        iframe {
-            width: 100%;
-            height: 100%;
+        img {
+            max-width: 50px;
+            max-height: 50px;
+            border-radius: 5px;
+            margin-right: 15px;
+        }
+        form {
+            display: inline;
+        }
+        button {
+            margin-left: 10px;
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        p {
+            color: red;
+        }
+        .app-details {
+            display: flex;
+            align-items: center;
         }
     </style>
 </head>
-<body id="screen">
-    <div class="container">
-        <h1>Installed Docker Applications</h1>
+<body>
+    <h1>Aplicativos Disponíveis</h1>
 
-        <!-- Lista de containers -->
-        <div class="app-container">
-            {% for app in apps %}
-                <div class="app" onclick="showApp('{{ app.port }}');">
-                    <img src="{{ app.icon }}" alt="{{ app.name }}">
-                    <div class="app-name">{{ app.name }}</div>
-                </div>
+    {% if docker_alert %}
+        <p>{{ docker_alert }}</p>
+    {% endif %}
+    
+    {% if docker_apps %}
+        <h2>Aplicativos Docker:</h2>
+        <ul>
+            {% for app in docker_apps %}
+                <li>
+                    <div class="app-details">
+                        <img src="{{ app.icon }}" alt="{{ app.name }} icon">
+                        <strong>{{ app.name }}</strong> (Porta: {{ app.port }})
+                        <form action="{{ url_for('install_docker_app') }}" method="POST" style="margin-left: auto;">
+                            <input type="hidden" name="app_name" value="{{ app.name }}">
+                            <button type="submit">Instalar</button>
+                        </form>
+                    </div>
+                </li>
             {% endfor %}
-        </div>
-    </div>
-
-    <script>
-        function showApp(port) {
-            var ip = 'http://{{ ip }}';
-            const iframe = document.getElementById('screen').innerHTML = "<iframe id='iframe' src='" + ip + ":" + port + "' frameborder='0'></iframe>";
-        }
-    </script>
+        </ul>
+    {% endif %}
+    
+    <h2>Aplicativos Não-Docker:</h2>
+    {% if non_docker_apps %}
+        <ul>
+            {% for app in non_docker_apps %}
+                <li>
+                    <div class="app-details">
+                        <img src="{{ app.icon or '/static/icons/default_app.png' }}" alt="{{ app.name }} icon">
+                        <strong>{{ app.name }}</strong>
+                        <form action="{{ url_for(app.install_route) }}" method="POST" style="margin-left: 5px;">
+                            <input type="password" name="password" placeholder="Senha" required>
+                            <button type="submit">Instalar</button>
+                        </form>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum aplicativo não-Docker disponível.</p>
+    {% endif %}
 </body>
 </html>

@@ -42,7 +42,7 @@ CREATE TABLE `access` (
 
 LOCK TABLES `access` WRITE;
 /*!40000 ALTER TABLE `access` DISABLE KEYS */;
-INSERT INTO `access` VALUES (1,1,'Login Successful','192.168.1.165','Linux','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36','2024-08-30 20:31:10');
+INSERT INTO `access` VALUES (1,1,'Login Successful','192.168.1.165','Linux','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36','2024-08-31 09:45:37');
 /*!40000 ALTER TABLE `access` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -57,10 +57,10 @@ CREATE TABLE `docker_containers` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `port` int NOT NULL,
-  `is_default` tinyint(1) DEFAULT '0',
+  `installed` tinyint(1) DEFAULT '0',
   `icon` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -69,7 +69,7 @@ CREATE TABLE `docker_containers` (
 
 LOCK TABLES `docker_containers` WRITE;
 /*!40000 ALTER TABLE `docker_containers` DISABLE KEYS */;
-INSERT INTO `docker_containers` VALUES (1,'ollama',8080,1,'/static/icons/ollama.png'),(2,'pihole',8090,1,'/static/icons/pihole.png');
+INSERT INTO `docker_containers` VALUES (1,'pihole',8090,0,'/static/icons/pihole.png');
 /*!40000 ALTER TABLE `docker_containers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -95,7 +95,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'ludro','$2b$12$UarNqNshBL3me1u3YNor2uU3EYx/DY9dqSWgLy4Amn/Pak76iHD9i');
+INSERT INTO `users` VALUES (1,'ludro','$2b$12$k6/LTuinJ9JYPw9v9wlBa.gz6fyDvbX6QcoPii0E1lYLGa6/sltrS');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -124,7 +124,7 @@ CREATE TABLE `wallpapers_and_theme_for_user` (
 
 LOCK TABLES `wallpapers_and_theme_for_user` WRITE;
 /*!40000 ALTER TABLE `wallpapers_and_theme_for_user` DISABLE KEYS */;
-INSERT INTO `wallpapers_and_theme_for_user` VALUES (1,1,'canyon.jpg','light','2024-08-30 20:31:21');
+INSERT INTO `wallpapers_and_theme_for_user` VALUES (1,1,'canyon.jpg','light','2024-08-31 09:45:51');
 /*!40000 ALTER TABLE `wallpapers_and_theme_for_user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -137,4 +137,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-08-30 21:34:24
+-- Dump completed on 2024-08-31 10:46:51

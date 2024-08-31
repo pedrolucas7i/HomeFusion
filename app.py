@@ -11,7 +11,14 @@ from datetime import datetime
 from flask import Flask, redirect, session, url_for, render_template, request, flash, send_from_directory
 from werkzeug.utils import secure_filename
 import dockers
+import applications
+import time
 
+
+non_docker_ports = {
+    'ollama': 8080,
+    # Adicione outras portas conforme necessário
+}
 
 # Configuration
 UPLOAD_FOLDER = 'uploads/'  # Directory where files will be stored
@@ -511,7 +518,7 @@ def prompt():
 
 
 
-# Docker's
+# Apps
 
 @app.route('/install_docker', methods=['GET', 'POST'])
 def install_docker():
@@ -527,48 +534,16 @@ def install_docker():
             return render_template('indisponivel.html')
     return render_template('install_docker.html')
 
-"""
-@app.route('/uninstall_docker', methods=['POST'])
-def uninstall_docker():
-    system = platform.system().lower()
-    if system == "linux":
-        password=request.form['password']
-        dockers.run_command("apt-get remove --purge -y docker-ce", password)
-        dockers.run_command("apt-get autoremove -y", password)
-        flash('Docker desinstalado com sucesso!', 'success')
-    elif system == "windows":
-        return render_template('indisponivel.html')
-    else:
-        return render_template('indisponivel.html')
-    return redirect(url_for('dashboard'))
-"""
 
-@app.route('/install_custom_container', methods=['GET', 'POST'])
-def install_custom_container():
-    if request.method == 'POST':
-        system = platform.system().lower()
-        if system == "linux":
-            container_name = request.form['container_name']
-            command = request.form['command']
-            container_port = request.form['port']  # Adiciona o campo para a porta
-            
-            # Executa o comando Docker fornecido pelo usuário
-            dockers.run_command(command)
-            
-            # Armazena o container no banco de dados
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO docker_containers (name, port) VALUES (%s, %s)", (container_name, container_port))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            
-            return render_template('available_applications.html', alert="App Instaled!")
-        elif system == "windows":
-            return render_template('indisponivel.html')
-        else:
-            return render_template('indisponivel.html')
-    return render_template('available_applications.html', alert="")
+@app.route('/install_docker_app', methods=['POST'])
+def install_docker_app():
+    app_name = request.form['app_name']
+    install_docker_container(app_name)
+
+def install_docker_container(app_name):
+    if app_name == "pihole":
+        return redirect(url_for('install_pihole'))
+
 
 """
 @app.route('/uninstall_container', methods=['POST'])
@@ -595,63 +570,86 @@ def uninstall_container():
         return render_template('indisponivel.html')
 """
         
-@app.route('/docker_apps')
-def docker_apps():
+@app.route('/apps')
+def apps():
     system = platform.system().lower()
     if system == "windows":
         return render_template('indisponivel.html')
-    elif system == "linux":
-        if check_docker_installed():
-            try:
-                # Obtém informações dos containers do banco de dados
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute("SELECT name, port, icon FROM docker_containers WHERE is_default = FALSE")
-                containers = cursor.fetchall()
-                cursor.close()
-                conn.close()
-                apps = [
-                    {
-                        'name': container[0], 
-                        'port': container[1], 
-                        'icon': container[2] if container[2] is not None else '/static/icons/default_app.png'
-                    }
-                    for container in containers
-                ]
-                print(apps)
-                if apps == None:
-                    apps= []
-                return render_template('applications.html', apps=apps, ip=get_local_ip())
-            except Exception as e:
-                flash(f'Erro ao obter aplicações Docker: {str(e)}', 'danger')
-                print(f'Erro ao obter aplicações Docker: {str(e)}')
-        else:
-            return redirect(url_for('install_docker'))
+    
+    docker_alert = ""
+    docker_apps = []
+    non_docker_apps = get_non_docker_applications()
+
+    if system == "linux":
+        try:
+            if check_docker_installed():
+                docker_apps = get_docker_applications()
+            else:
+                docker_alert = "Docker não instalado. Alguns aplicativos podem não estar disponíveis."
+        except Exception as e:
+            docker_alert = f"Erro ao obter aplicativos Docker: {str(e)}"
+    
+    return render_template('applications.html', docker_alert=docker_alert, docker_apps=docker_apps, non_docker_apps=non_docker_apps)
+
+def get_docker_applications():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, port, installed, icon FROM docker_containers")
+    containers = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    apps = [
+        {
+            'name': container[0],
+            'port': container[1],
+            'installed' : container[2],
+            'icon': container[3] if container[3] is not None else '/static/icons/default_app.png'
+        }
+        for container in containers
+    ]
+    return apps
+
+def get_non_docker_applications():
+    apps = []
+    try:
+        with open('non_docker_apps.txt', 'r') as file:
+            for line in file:
+                name, route = line.strip().split(',')
+                port = non_docker_ports.get(name)
+                if port:
+                    apps.append({'name': name, 'install_route': route, 'port': port})
+    except Exception as e:
+        print(f"Erro ao ler non_docker_apps.txt: {str(e)}")
+    return apps
 
 
-@app.route('/available_applications')
-def available_applications():
-    system = platform.system().lower()
-    if system == "windows":
-        return render_template('indisponivel.html')
-    elif system == "linux":
-        if check_docker_installed():
-            return render_template('available_applications.html', alert="")
-        else:
-            return redirect(url_for('install_docker'))
-    else:
-        return render_template('indisponivel.html')
+def remove_installed_app(app_name):
+    try:
+        with open('non_docker_apps.txt', 'r') as file:
+            lines = file.readlines()
+        with open('non_docker_apps.txt', 'w') as file:
+            for line in lines:
+                if not line.startswith(app_name + ","):
+                    file.write(line)
+    except Exception as e:
+        print(f"Erro ao atualizar non_docker_apps.txt: {str(e)}")
+
+@app.route('/view')
+def view():
+    docker_apps = get_docker_applications()
+    non_docker_apps = get_non_docker_applications()
+    return render_template('view.html', docker_apps=docker_apps, non_docker_apps=non_docker_apps, ip=get_local_ip())
+
     
 @app.route('/install_ollama', methods=['POST'])
 def install_ollama():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO docker_containers (name, port) VALUES (%s, %s)", ("ollama", 8080))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    dockers.run_ollama_container()
-    return redirect(url_for('available_applications'), alert="Ollama Instaled!")
+    if request.method == 'POST':
+        passw = request.form['password']
+        remove_installed_app("ollama")
+        applications.install_ollama(passw)
+        return redirect(url_for('view'))
+    return render_template('install_ollama.html')
 
 @app.route('/install_pihole', methods=['GET', 'POST'])
 def install_pihole():
@@ -662,7 +660,7 @@ def install_pihole():
         # Adiciona o Pi-hole ao banco de dados
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO docker_containers (name, port) VALUES (%s, %s)", ("pi-hole", 8090))
+        cursor.execute("UPDATE docker_containers SET installed=TRUE WHERE name = 'pihole';")
         conn.commit()
         cursor.close()
         conn.close()
@@ -671,7 +669,7 @@ def install_pihole():
         dockers.run_pihole_container(passw)
         
         flash('Pi-hole instalado com sucesso!', 'success')
-        return redirect(url_for('docker_apps'))
+        return redirect(url_for('view'))
     
     # Renderiza o template com o formulário de instalação
     return render_template('install_pihole.html')

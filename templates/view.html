@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualização de Aplicativos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+        #app-list {
+            width: 25%;
+            background-color: #f8f8f8;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        #app-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        #app-list li {
+            margin-bottom: 10px;
+        }
+        #app-list a {
+            text-decoration: none;
+            color: #333;
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #eaeaea;
+        }
+        #app-list a:hover {
+            background-color: #d5d5d5;
+        }
+        #iframe-container {
+            width: 75%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body id="view">
+    <div id="app-list">
+        <h2>Aplicativos Disponíveis</h2>
+        <ul>
+            {% for app in docker_apps %}
+                {% if app.installed %}
+                <li>
+                    <a href="#" onclick="loadApp('{{ get_local_ip() }}', '{{ app.port }}')">{{ app.name }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+            {% for app in non_docker_apps %}
+            <li>
+                <a href="#" onclick="loadApp('{{ get_local_ip() }}', '{{ app.port }}')">{{ app.name }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div id="iframe-container">
+        <iframe id="app-frame" src=""></iframe>
+    </div>
+
+    <script>
+        function loadApp(ip, port) {
+            const iframe = document.getElementById('view');
+            iframe.src = `http://${ip}:${port}`;
+        }
+    </script>
+</body>
+</html>

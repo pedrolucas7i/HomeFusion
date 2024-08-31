@@ -37,9 +37,8 @@ CREATE TABLE docker_containers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     port INT NOT NULL,
-    is_default BOOLEAN DEFAULT FALSE,
+    installed BOOLEAN DEFAULT FALSE,
     icon VARCHAR(255) NULL
 );
 
-INSERT INTO docker_containers (name, port, is_default, icon) VALUES ('ollama', 8080, TRUE, '/static/icons/ollama.png');
-INSERT INTO docker_containers (name, port, is_default, icon) VALUES ('pihole', 8090, TRUE, '/static/icons/pihole.png');
+INSERT INTO docker_containers (name, port, installed, icon) VALUES ('pihole', 8090, FALSE, '/static/icons/pihole.png');
