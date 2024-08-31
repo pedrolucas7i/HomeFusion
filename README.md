@@ -10,10 +10,13 @@ sudo apt install mysql-server -y
 ```
 
 Config MySQL Server:
+
+Enter in mysql prompt:
 ```sh
 sudo mysql -u root
 ```
 
+Change the password (change the 'mynewpassword' for your password):
 ```sh
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'mynewpassword';
 ```
@@ -22,6 +25,7 @@ ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'mynewpas
 FLUSH PRIVILEGES;
 ```
 
+Create database and tables in MySQL prompt:
 ```sh
 CREATE DATABASE ludro;
 
@@ -68,6 +72,7 @@ CREATE TABLE docker_containers (
 INSERT INTO docker_containers (name, port, installed, icon) VALUES ('pihole', '8090/admin', FALSE, '/static/icons/pihole.png');
 ```
 
+Exit MySQL prompt:
 ```sh
 quit
 ```
