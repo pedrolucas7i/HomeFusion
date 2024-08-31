@@ -24,10 +24,6 @@
         document.getElementById("window").src = "{{ url_for('user_management') }}";
     }
 
-    function docker_install() {
-        document.getElementById("window").src = "{{ url_for('install_docker') }}";
-    }
-
     function apps() {
         document.getElementById("window").src = "{{ url_for('apps') }}";
     }
@@ -40,7 +36,6 @@
             <div>
                 <p onclick="wallpaper_theme();">Visuals</p>
                 <p onclick="sessions();">Sessions</p>
-                <p onclick="docker_install();">Install Docker</p>
                 <p onclick="apps();">Aplications</p>
             </div>
         </div>
