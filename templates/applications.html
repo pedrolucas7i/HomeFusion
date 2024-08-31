@@ -68,16 +68,18 @@
         <h2>Aplicativos Docker:</h2>
         <ul>
             {% for app in docker_apps %}
-                <li>
-                    <div class="app-details">
-                        <img src="{{ app.icon }}" alt="{{ app.name }} icon">
-                        <strong>{{ app.name }}</strong> (Porta: {{ app.port }})
-                        <form action="{{ url_for('install_docker_app') }}" method="POST" style="margin-left: auto;">
-                            <input type="hidden" name="app_name" value="{{ app.name }}">
-                            <button type="submit">Instalar</button>
-                        </form>
-                    </div>
-                </li>
+                {% if not app.installed %}
+                    <li>
+                        <div class="app-details">
+                            <img src="{{ app.icon }}" alt="{{ app.name }} icon">
+                            <strong>{{ app.name }}</strong> (Porta: {{ app.port }})
+                            <form action="{{ url_for('install_docker_app') }}" method="POST" style="margin-left: auto;">
+                                <input type="hidden" name="app_name" value="{{ app.name }}">
+                                <button type="submit">Instalar</button>
+                            </form>
+                        </div>
+                    </li>
+                    {% endif %}
             {% endfor %}
         </ul>
     {% endif %}

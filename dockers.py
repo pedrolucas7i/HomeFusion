@@ -106,8 +106,8 @@ def run_pihole_container(password):
     command = (
         f"docker run -d "
         f"--name pihole "
-        f"-p 53:53/tcp "
-        f"-p 53:53/udp "
+        f"-p 8053:53/tcp "
+        f"-p 8053:53/udp "
         f"-p 8090:80 "
         f"-p 8453:443 "
         f"-e TZ='America/New_York' "
@@ -119,4 +119,4 @@ def run_pihole_container(password):
         f"--restart=unless-stopped "
         f"pihole/pihole"
     )
-    run_command(command)
+    run_command(command, password=password)

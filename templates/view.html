@@ -50,22 +50,29 @@
             {% for app in docker_apps %}
                 {% if app.installed %}
                 <li>
-                    <a href="#" onclick="loadApp('{{ ip }}', '{{ app.port }}')">{{ app.name }}</a>
+                    <a href="#" onclick="loadApp('{{ ip }}', '{{ app.port }}', '{{ app.name }}')">{{ app.name }}</a>
                 </li>
                 {% endif %}
             {% endfor %}
             {% for app in non_docker_apps %}
                 {% if app.installed %}
                     <li>
-                        <button onclick="loadApp('{{ ip }}', '{{ app.port }}')">{{ app.name }}</button>
+                        <a href="#" onclick="loadApp('{{ ip }}', '{{ app.port }}', '{{ app.name }}')">{{ app.name }}</a>
                     </li>
                 {% endif %}
             {% endfor %}
         </ul>
     </div>
     <script>
-        function loadApp(ip, port) {
-            document.getElementById('view').innerHTML = `<iframe id='iframe' src='http://${ip}:${port}' frameborder='0'></iframe>`;
+        function loadApp(ip, port, app_name) {
+            function redirectToNewWindow(url) {
+                window.open(url, '_blank');
+            }
+            if (app_name == "pihole") {
+                redirectToNewWindow(`http://${ip}:${port}/login.php`);
+            } else {
+                document.getElementById('view').innerHTML = `<iframe id='iframe' src='http://${ip}:${port}' frameborder='0'></iframe>`;
+            }
         }
     </script>
 </body>

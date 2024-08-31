@@ -36,9 +36,9 @@ CREATE TABLE wallpapers_and_theme_for_user (
 CREATE TABLE docker_containers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    port INT NOT NULL,
+    port VARCHAR(255) NOT NULL,
     installed BOOLEAN DEFAULT FALSE,
     icon VARCHAR(255) NULL
 );
 
-INSERT INTO docker_containers (name, port, installed, icon) VALUES ('pihole', 8090, FALSE, '/static/icons/pihole.png');
+INSERT INTO docker_containers (name, port, installed, icon) VALUES ('pihole', '8090/admin', FALSE, '/static/icons/pihole.png');

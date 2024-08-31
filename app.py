@@ -542,11 +542,9 @@ def install_docker():
 @app.route('/install_docker_app', methods=['POST'])
 def install_docker_app():
     app_name = request.form['app_name']
-    install_docker_container(app_name)
-
-def install_docker_container(app_name):
     if app_name == "pihole":
         return redirect(url_for('install_pihole'))
+    return redirect(url_for('apps'))
 
 
 """
