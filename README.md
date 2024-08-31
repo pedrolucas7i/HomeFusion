@@ -4,12 +4,12 @@
 ![HomeFusion](screenshots/dashboard.png)
 ## Project Setup
 
-Install MySQL Server:
+### Install MySQL Server:
 ```sh
 sudo apt install mysql-server -y
 ```
 
-Config MySQL Server:
+### Config MySQL Server:
 
 Enter in mysql prompt:
 ```sh
@@ -76,6 +76,8 @@ Exit MySQL prompt:
 ```sh
 quit
 ```
+
+### Config App
 
 Create venv (necessary):
 ```sh
