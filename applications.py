@@ -71,7 +71,7 @@ def install_ollama(password):
         ]
 
         for cmd in open_webui_commands:
-            output = utils.run_command(cmd)
+            output = utils.run_command(cmd, password=password)
             print(output)
 
         print("Ollama and Open WebUI installation finished!")
